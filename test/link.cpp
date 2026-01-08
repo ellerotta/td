@@ -1,5 +1,5 @@
 //
-// Copyright Aliaksei Levin (levlam@telegram.org), Arseny Smirnov (arseny30@gmail.com) 2014-2025
+// Copyright Aliaksei Levin (levlam@telegram.org), Arseny Smirnov (arseny30@gmail.com) 2014-2026
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -279,6 +279,10 @@ static auto edit_profile_settings() {
 
 static auto game(const td::string &bot_username, const td::string &game_short_name) {
   return td::td_api::make_object<td::td_api::internalLinkTypeGame>(bot_username, game_short_name);
+}
+
+static auto gift_auction(const td::string &slug) {
+  return td::td_api::make_object<td::td_api::internalLinkTypeGiftAuction>(slug);
 }
 
 static auto gift_collection(const td::string &owner_username, td::int32 collection_id) {
@@ -981,6 +985,24 @@ TEST(Link, parse_internal_link_part2) {
   parse_internal_link("t.me/addlist/123456a", chat_folder_invite("123456a"));
   parse_internal_link("t.me/addlist/123456a/123123/12/31/a/s//21w/?asdas#test", chat_folder_invite("123456a"));
 
+  parse_internal_link("t.me/auction?slug=abcdef", nullptr);
+  parse_internal_link("t.me/auction", nullptr);
+  parse_internal_link("t.me/auction/", nullptr);
+  parse_internal_link("t.me/auction//abcdef", nullptr);
+  parse_internal_link("t.me/auction?/abcdef", nullptr);
+  parse_internal_link("t.me/auction/?abcdef", nullptr);
+  parse_internal_link("t.me/auction/#abcdef", nullptr);
+  parse_internal_link("t.me/auction/abacaba", gift_auction("abacaba"));
+  parse_internal_link("t.me/auction/aba%20aba", gift_auction("aba aba"));
+  parse_internal_link("t.me/auction/aba%30aba", gift_auction("aba0aba"));
+  parse_internal_link("t.me/auction/123456a", gift_auction("123456a"));
+  parse_internal_link("t.me/auction/12345678901", gift_auction("12345678901"));
+  parse_internal_link("t.me/auction/123456", gift_auction("123456"));
+  parse_internal_link("t.me/auction/123456/123123/12/31/a/s//21w/?asdas#test", gift_auction("123456"));
+  parse_internal_link("t.me/auction/12345678901a", gift_auction("12345678901a"));
+  parse_internal_link("t.me/auction/123456a", gift_auction("123456a"));
+  parse_internal_link("t.me/auction/123456a/123123/12/31/a/s//21w/?asdas#test", gift_auction("123456a"));
+
   parse_internal_link("t.me/call?invite=abcdef", nullptr);
   parse_internal_link("t.me/call", nullptr);
   parse_internal_link("t.me/call/", nullptr);
@@ -1025,6 +1047,11 @@ TEST(Link, parse_internal_link_part2) {
   parse_internal_link("tg:addlist?slug=abc%20def", unknown_deep_link("tg://addlist?slug=abc%20def"));
   parse_internal_link("tg://addlist?slug=abc%30def", chat_folder_invite("abc0def"));
   parse_internal_link("tg:addlist?slug=", unknown_deep_link("tg://addlist?slug="));
+
+  parse_internal_link("tg:stargift_auction?slug=abcdef", gift_auction("abcdef"));
+  parse_internal_link("tg:stargift_auction?slug=abc%20def", gift_auction("abc def"));
+  parse_internal_link("tg://stargift_auction?slug=abc%30def", gift_auction("abc0def"));
+  parse_internal_link("tg:stargift_auction?slug=", unknown_deep_link("tg://stargift_auction?slug="));
 
   parse_internal_link("tg:call?slug=abcdef", group_call("abcdef"));
   parse_internal_link("tg:call?slug=abc%20def", unknown_deep_link("tg://call?slug=abc%20def"));
@@ -1347,6 +1374,10 @@ TEST(Link, parse_internal_link_part3) {
   parse_internal_link("tg:resolve?domain=username&startchannel&admin=", public_chat("username"));
   parse_internal_link(
       "tg:resolve?domain=username&startchannel&admin=post_messages+manage_direct_messages",
+      bot_add_to_channel("username", chat_administrator_rights(true, false, true, false, false, false, false, false,
+                                                               false, false, false, false, false, false, true, false)));
+  parse_internal_link(
+      "tg:resolve?domain=username&startchannel&admin=post_messages+manage_direct_messages+restrict_members",
       bot_add_to_channel("username", chat_administrator_rights(true, false, true, false, false, false, true, false,
                                                                false, false, false, false, false, false, true, false)));
   parse_internal_link(
@@ -1387,7 +1418,7 @@ TEST(Link, parse_internal_link_part3) {
   parse_internal_link("t.me/username?startchannel&admin=", public_chat("username"));
   parse_internal_link("t.me/username?startchannel&admin=post_messages",
                       bot_add_to_channel("username", chat_administrator_rights(true, false, true, false, false, false,
-                                                                               true, false, false, false, false, false,
+                                                                               false, false, false, false, false, false,
                                                                                false, false, false, false)));
   parse_internal_link(
       "t.me/"
@@ -1722,6 +1753,7 @@ TEST(Link, parse_internal_link_part4) {
   parse_internal_link("addlist.t.me", nullptr);
   parse_internal_link("addstickers.t.me", nullptr);
   parse_internal_link("addtheme.t.me", nullptr);
+  parse_internal_link("auction.t.me", nullptr);
   parse_internal_link("auth.t.me", nullptr);
   parse_internal_link("boost.t.me", nullptr);
   parse_internal_link("call.t.me", nullptr);

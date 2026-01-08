@@ -1,5 +1,5 @@
 //
-// Copyright Aliaksei Levin (levlam@telegram.org), Arseny Smirnov (arseny30@gmail.com) 2014-2025
+// Copyright Aliaksei Levin (levlam@telegram.org), Arseny Smirnov (arseny30@gmail.com) 2014-2026
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -63,5 +63,8 @@ int32 get_premium_duration_month_count(int32 day_count);
 
 // converts Premium duration in months to duration in days
 int32 get_premium_duration_day_count(int32 month_count);
+
+// checks that the integer represents a valid RGB color
+bool is_valid_color(int32 color);
 
 }  // namespace td
